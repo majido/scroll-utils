@@ -27,21 +27,30 @@
     
     Object.defineProperty(prototype, property, {
       set: function(v) {
-        var changed = v !== original.get.call(this);
+        var changed = v !== this[property];
         console.error(prototype.constructor.name + '::' + property + ' set to:' + v + (changed?' (changed)':' (not changed)'));
         // debugger;
-        original.set.call(this, v);
+        if ('set' in original)
+          original.set.call(this, v);
+        else
+          original.value = v;
       },
-      get: original.get
+      get: function() {
+        return 'get' in original ? original.get.call(this) : original.value;
+      }
     });
   }
   
   for (var m of ['scrollBy', 'scrollTo', 'scroll'])
-    logMethod(Window.prototype, m);
+    logMethod(window, m);
  
-  // Doesn't yet work in Chrome - http://crbug.com/475556
+  // Firefox only
+  for (var m of ['scrollByLines', 'scrollByPages'])
+    if (m in window)
+      logMethod(window, m);
+
   for (var p of ['scrollX', 'scrollY'])
-    logSetter(Window.prototype, p);
+    logSetter(window, p);
   
   for (var m of ['scrollIntoView', 'scrollIntoViewIfNeeded', 'focus'])
     logMethod(Element.prototype, m);
